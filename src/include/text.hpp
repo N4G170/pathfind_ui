@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
+#include <mutex>
 
 #include "structs.hpp"
 
@@ -101,6 +102,8 @@ class Text
          */
         virtual void Render(std::unique_ptr<SDL_Renderer, Deleters>& screen_renderer)
         {
+            std::lock_guard<std::mutex> lock(m_string_mutex);
+            
             if(m_text_texture)
             {
                 //Set rendering space and render to screen
@@ -152,12 +155,16 @@ class Text
          * \see m_multiline
          */
         unsigned int m_line_width;
+
+        std::mutex m_string_mutex;
 };
 
 
 
 void Text::SetString(const std::string& text )
 {
+    std::lock_guard<std::mutex> lock(m_string_mutex);
+
     if(m_text == text)
         return;
 
@@ -170,12 +177,12 @@ void Text::SetString(const std::string& text )
         return;
     }
 
-    SDL_Surface* textSurface = nullptr;
+    // SDL_Surface* textSurface = nullptr;
 
     /*if(m_multiline)
         textSurface = TTF_RenderText_Blended_Wrapped( m_font, text.c_str(), m_color, m_line_width);//function not working correctly
     else*/
-        textSurface = TTF_RenderText_Blended( m_font, text.c_str(), m_color);
+    SDL_Surface* textSurface = TTF_RenderText_Blended( m_font, text.c_str(), m_color);
 
     m_text_texture.reset( SDL_CreateTextureFromSurface( m_main_pointers->screen_renderer.get(), textSurface ));
 

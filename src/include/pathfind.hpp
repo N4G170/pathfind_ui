@@ -25,7 +25,7 @@ std::function<float(const int&, const int&, const float&, const float&, const in
 /**
 * \brief Searches for the shortest path on a map for a given benchmark
 */
-void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts)
+void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex)
 {
     //number of cells analyzed
     unsigned int operations = 0;
@@ -91,7 +91,8 @@ void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainCont
         MessageWriter::Instance()->WriteLineToConsole("Path took "+Clock::Instance()->StopAndReturnClock(clock_id)+
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
-        
+
+        std::lock_guard<std::mutex> lock(text_mutex);
         menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
     }
     else if(flags.stop)

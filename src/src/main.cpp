@@ -38,51 +38,13 @@ void RequestMap(int path_id, std::vector<std::string>& maps, std::string& previo
 {
     switch (path_id)
     {
-    case 3://maps stored in files in the maps folder
+        case 3://maps stored in files in the maps folder
         {
             if(previous_map_name != maps[map_id])//load new map
             {
                 previous_map_name = data.name = maps[map_id];
                 LoadMap(maps[map_id], data);
             }
-            break;
-        }
-
-        case 1://Paradox example 1 from kattis
-        {
-            previous_map_name = "Paradox1";
-            data.search_type = SEARCH_TYPE::QUARTILE;
-            data.heuristic_type = HEURISTIC_TYPE::MANHATTAN;
-            data.map = {1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1};
-            data.map.shrink_to_fit();
-            data.path_buffer.resize(12);//12 - value from example
-
-            data.map_width = 4;
-            data.map_height = 3;
-            data.benchmarks.clear();
-            //benchmark values start_x, start_y, target_x, target_y, expected length
-            data.benchmarks.push_back(MapBenchmark{0, 0, 1, 2, 3 });//expected result from kattis
-            data.selected_bechmark_index = 0;
-            break;
-        }
-
-        case 2://Paradox example 2 from kattis
-        {
-            previous_map_name = "Paradox2";
-
-            data.search_type = SEARCH_TYPE::QUARTILE;
-            data.heuristic_type = HEURISTIC_TYPE::MANHATTAN;
-            data.map = {0, 0, 1, 0, 1, 1, 1, 0, 1};
-            data.map.shrink_to_fit();
-            data.path_buffer.resize(7);//7 - value from example
-
-            data.map_width = 3;
-            data.map_height = 3;
-            data.benchmarks.clear();
-            //benchmark values start_x, start_y, target_x, target_y, expected length
-            data.benchmarks.push_back(MapBenchmark{2, 0, 0, 2, -1 });//expected result from kattis
-            data.selected_bechmark_index = 0;
-
             break;
         }
 
@@ -193,8 +155,10 @@ void  InitMenu(MainPointers& main_pointers, std::map<std::string, Text>& menu_te
 /**
 * \brief Renders all the Text objects and the nodes color legend
 */
-void RenderMenu(MainPointers& main_pointers, std::map<std::string, Text>& menu_text_objects, GridImagePointers& image_pointers, const bool& show_warning)
+void RenderMenu(MainPointers& main_pointers, std::map<std::string, Text>& menu_text_objects, GridImagePointers& image_pointers, const bool& show_warning, std::mutex& text_mutex)
 {
+    std::lock_guard<std::mutex> lock(text_mutex);
+
     menu_text_objects["title"].Render(main_pointers.screen_renderer);
     menu_text_objects["p_problems"].Render(main_pointers.screen_renderer);
     menu_text_objects["p_1"].Render(main_pointers.screen_renderer);
@@ -260,6 +224,7 @@ int main(int argc, char* argv[])
     MainPointers main_pointers;
     GridImagePointers image_pointers;
     std::map< std::string, Text > menu_text_objects;
+    std::mutex text_mutex;
 
     //start SDL
     if(!InitSDL(main_pointers))
@@ -483,6 +448,7 @@ int main(int argc, char* argv[])
 
                         if(map_data.search_type == SEARCH_TYPE::OCTILE_HIGH_8)
                         {
+                            // HighLevelSearch( map_data, grid_ui, flags, menu_text_objects, 64, 8);
                             //start search thread and sends it all needed data
                             pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 64, 8 };
 
@@ -492,6 +458,7 @@ int main(int argc, char* argv[])
                         }
                         else if(map_data.search_type == SEARCH_TYPE::OCTILE_HIGH_64)
                         {
+                            // HighLevelSearch(map_data, grid_ui, flags, menu_text_objects, 8, 64);
                             //start search thread and sends it all needed data
                             pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 8, 64 };
 
@@ -501,8 +468,9 @@ int main(int argc, char* argv[])
                         }
                         else
                         {
+                            // FindPath(map_data, grid_ui, flags, menu_text_objects);
                             //start search thread and sends it all needed data
-                            pathfind_thread = std::thread{ FindPath, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects) };
+                            pathfind_thread = std::thread{ FindPath, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), std::ref(text_mutex) };
 
                             //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
                             //also we need the flag as we cannot join the thread after we detach it
@@ -545,7 +513,7 @@ int main(int argc, char* argv[])
             menu_text_objects["m_benchmark"].SetString("<-|  "+std::to_string(benchmark_index + 1)+"/"+std::to_string(max_benchmarks)+"  |->");
         }
 
-        RenderMenu(main_pointers, menu_text_objects, image_pointers, show_warning);
+        RenderMenu(main_pointers, menu_text_objects, image_pointers, show_warning, text_mutex);
         //end print menu
 
         //Update screen
