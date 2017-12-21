@@ -2,7 +2,7 @@
 #define UI_STRUCTS_H
 
 #include <memory>
-#include <SDL2/SDL.h>
+#include "SDL.h"
 
 struct Deleters;
 

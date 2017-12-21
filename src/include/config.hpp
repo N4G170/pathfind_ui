@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #include <string>
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #include <bitset>
 
 //flags used to mark the status of a node
