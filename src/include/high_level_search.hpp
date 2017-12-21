@@ -15,6 +15,7 @@
 #include "finder.hpp"
 #include "text.hpp"
 #include "utils.hpp"
+#include <mutex>
 
 struct HighLevelNode
 {
@@ -64,7 +65,7 @@ std::map<int, std::vector< int > > FindHighLevelPath(const int& start_index, con
 /**
 * \brief Searches for the shortest path on a map using an high level abstraction
 */
-void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, int grid_width, int node_size)
+void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, int grid_width, int node_size, std::mutex& text_mutex)
 {
     if(high_level_grid.size() == 0 || g_previous_map_name.compare(map_data.name) != 0)//high level grid was not created
     {
@@ -80,7 +81,7 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
 
     //High level pathfind. Get a path from the high level grid (returns low level indeces)
     std::pair< std::vector< int >, bool>  high_level_valid_path_result = FindHighLevelPath(start_index, target_index, grid_width, node_size);
-    
+
     if(!high_level_valid_path_result.second)//failed to find path
     {
         MessageWriter::Instance()->WriteLineToConsole("No High Level path found.");
@@ -152,12 +153,12 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
         search_data.parents[search_data.start_index] = -1;//the start cell has no parent
 
         while(flags.pause)
-            std::this_thread::sleep_for(5ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         if(!flags.fast)
         {
             thread_sleeps++;
-            std::this_thread::sleep_for(0.2ms);
+            std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
 
         if(flags.quit || flags.stop)
@@ -169,12 +170,12 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
             operations++;
 
             while(flags.pause)
-                std::this_thread::sleep_for(5ms);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             if(!flags.fast)
             {
                 thread_sleeps++;
-                std::this_thread::sleep_for(0.2ms);
+                std::this_thread::sleep_for(std::chrono::microseconds(200));
             }
 
             if(flags.quit || flags.stop)
@@ -189,6 +190,7 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
 
+        std::lock_guard<std::mutex> lock(text_mutex);
         menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
     }
     else if(flags.stop)
@@ -414,7 +416,7 @@ std::queue< int > GetHighLevelNeighbors(const int& current_index)
         neighbors.push( high_level_grid[current_index].right_index );//move one right
     }
 
-    return std::move(neighbors);
+    return neighbors;
 }
 
 int GetExitIndex(const HighLevelNode& node, const int& neigbor)

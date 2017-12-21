@@ -29,6 +29,7 @@ enum SEARCH_TYPE
     OCTILE_NOT_CORNER = 2,
     OCTILE_HIGH_8 = 3,
     OCTILE_HIGH_64 = 4,
+    MAZE = 5,
 };
 
 enum HEURISTIC_TYPE

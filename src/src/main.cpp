@@ -18,18 +18,9 @@
 #include <chrono>
 
 #include "high_level_search.hpp"
-
-/**
-* \brief Generates a random number between min and max, includes both limits
-*/
-int RandomGenerator(int min = 0, int max = 4)
-{
-    std::random_device seed;
-    std::default_random_engine engine( seed() );
-    std::uniform_int_distribution<int> dist(min, max);
-
-    return dist(engine);
-}
+// #include "labyrinth_search.hpp"
+#include "menu.hpp"
+#include "utils.hpp"
 
 /**
 * \brief Loads the data of the requested map into the MapData reference that will be used to call the pathfind algorithm
@@ -97,127 +88,6 @@ void RequestMap(int path_id, std::vector<std::string>& maps, std::string& previo
         }
     }
 }
-
-/**
-* \brief Initialize the std::map with the Text objects that own all rendered text
-*/
-void  InitMenu(MainPointers& main_pointers, std::map<std::string, Text>& menu_text_objects)
-{
-    int y{ 290 };
-    //prepare menu
-    menu_text_objects["fps"] = Text(main_pointers, 1170, 10, "0");
-    menu_text_objects["title"] = Text(main_pointers, 1050, 50, "Pathfinder Program");
-
-    menu_text_objects["p_problems"] = Text(main_pointers, 1050, 100, "Paradox Examples");
-    menu_text_objects["p_1"] = Text(main_pointers, 1050, 150, "-> Example 1 (press '1' to run)");
-    menu_text_objects["p_2"] = Text(main_pointers, 1050, 175, "-> Example 2 (press '2' to run)");
-    menu_text_objects["p_note"] = Text(main_pointers, 1050, 220, "Examples use 4 directions A* algorithm");
-
-    menu_text_objects["line_1"] = Text(main_pointers, 1050, 240, "------------------------------------");
-
-    menu_text_objects["maps"] = Text(main_pointers, 1050, y, "Extra maps (8 directions no corner)"); y += 25;
-    menu_text_objects["map_name"] = Text(main_pointers, 1050, y, "<-|    |->"); y += 25;
-    menu_text_objects["m_note"] = Text(main_pointers, 1050, y, "L/R Arrows to change map"); y += 25;
-
-    menu_text_objects["m_benchmark"] = Text(main_pointers, 1050, y, "<-|    |-> U/D Arrows change benchmark"); y += 25;
-    menu_text_objects["m_note_2"] = Text(main_pointers, 1050, y, "'R' to run selected map benchmark"); y += 45;
-
-    menu_text_objects["warning"] = Text(main_pointers, 1050, y, "WARNING-EXPERIMENTAL HIERARCHICAL MAP"); y += 30;
-    menu_text_objects["line_2"] = Text(main_pointers, 1050, y, "------------------------------------"); y += 25;
-
-    menu_text_objects["toggle_grid"] = Text(main_pointers, 1050, y, "'G' - Show Grid"); y += 25;
-    menu_text_objects["toggle_map"] = Text(main_pointers, 1050, y, "'H' - Hide Map"); y += 25;
-    menu_text_objects["toggle_path"] = Text(main_pointers, 1050, y, "'J' - Hide Path"); y += 30;
-
-    menu_text_objects["toggle_pause"] = Text(main_pointers, 1050, y, "'P' - Pause Search"); y += 25;
-    menu_text_objects["break"] = Text(main_pointers, 1050, y, "'B' - Stop Search"); y += 25;
-    menu_text_objects["speed"] = Text(main_pointers, 1050, y, "'F' - Set search speed Fast"); y += 25;
-
-    menu_text_objects["line_3"] = Text(main_pointers, 1050, y, "------------------------------------"); y += 25;
-
-    menu_text_objects["current_map"] = Text(main_pointers, 1050, y, "Current Map: "); y += 25;
-    menu_text_objects["expected"] = Text(main_pointers, 1050, y, "Expected length: "); y += 25;
-    menu_text_objects["result"] = Text(main_pointers, 1050, y, "Result length: ");
-
-    y += 50;
-    menu_text_objects["l_to_check"] = Text(main_pointers, 1100, y, "Node to check "); y += 25;
-    menu_text_objects["l_checked"] = Text(main_pointers, 1100, y, "Checked node"); y += 25;
-    menu_text_objects["l_short_path"] = Text(main_pointers, 1100, y, "Node in short path"); y += 25;
-
-    menu_text_objects["l_start"] = Text(main_pointers, 1100, y, "Start node"); y += 25;
-    menu_text_objects["l_target"] = Text(main_pointers, 1100, y, "Target node"); y += 25;
-
-    menu_text_objects["l_path"] = Text(main_pointers, 1100, y, "Passable node"); y += 25;
-    menu_text_objects["l_wall"] = Text(main_pointers, 1100, y, "Impassable node ");
-
-}
-
-/**
-* \brief Renders all the Text objects and the nodes color legend
-*/
-void RenderMenu(MainPointers& main_pointers, std::map<std::string, Text>& menu_text_objects, GridImagePointers& image_pointers, const bool& show_warning, std::mutex& text_mutex)
-{
-    std::lock_guard<std::mutex> lock(text_mutex);
-
-    menu_text_objects["title"].Render(main_pointers.screen_renderer);
-    menu_text_objects["p_problems"].Render(main_pointers.screen_renderer);
-    menu_text_objects["p_1"].Render(main_pointers.screen_renderer);
-    menu_text_objects["p_2"].Render(main_pointers.screen_renderer);
-    menu_text_objects["p_note"].Render(main_pointers.screen_renderer);
-    menu_text_objects["line_1"].Render(main_pointers.screen_renderer);
-    menu_text_objects["maps"].Render(main_pointers.screen_renderer);
-    menu_text_objects["map_name"].Render(main_pointers.screen_renderer);
-    menu_text_objects["m_note"].Render(main_pointers.screen_renderer);
-    menu_text_objects["m_benchmark"].Render(main_pointers.screen_renderer);
-    menu_text_objects["m_note_2"].Render(main_pointers.screen_renderer);
-    menu_text_objects["line_2"].Render(main_pointers.screen_renderer);
-    menu_text_objects["toggle_map"].Render(main_pointers.screen_renderer);
-    menu_text_objects["toggle_grid"].Render(main_pointers.screen_renderer);
-    menu_text_objects["toggle_path"].Render(main_pointers.screen_renderer);
-    menu_text_objects["toggle_pause"].Render(main_pointers.screen_renderer);
-    menu_text_objects["break"].Render(main_pointers.screen_renderer);
-    menu_text_objects["speed"].Render(main_pointers.screen_renderer);
-    menu_text_objects["line_3"].Render(main_pointers.screen_renderer);
-    menu_text_objects["current_map"].Render(main_pointers.screen_renderer);
-    menu_text_objects["expected"].Render(main_pointers.screen_renderer);
-    menu_text_objects["result"].Render(main_pointers.screen_renderer);
-    menu_text_objects["fps"].Render(main_pointers.screen_renderer);
-
-    //render legend text
-    menu_text_objects["l_to_check"].Render(main_pointers.screen_renderer);
-    menu_text_objects["l_checked"].Render(main_pointers.screen_renderer);
-    menu_text_objects["l_short_path"].Render(main_pointers.screen_renderer);
-
-    menu_text_objects["l_start"].Render(main_pointers.screen_renderer);
-    menu_text_objects["l_target"].Render(main_pointers.screen_renderer);
-
-    menu_text_objects["l_path"].Render(main_pointers.screen_renderer);
-    menu_text_objects["l_wall"].Render(main_pointers.screen_renderer);
-
-    //WARNING
-    if(show_warning)
-        menu_text_objects["warning"].Render(main_pointers.screen_renderer);
-
-    //render legend images
-    SDL_Rect destination_rect;
-    destination_rect.w = 25;
-    destination_rect.h = 25;
-    destination_rect.x = 1070;
-    destination_rect.y = 765;
-
-    //render image
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.to_check.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.checked.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.short_path.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.start.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.target.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.path.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-    SDL_RenderCopy( main_pointers.screen_renderer.get(), image_pointers.wall.get(), nullptr, &destination_rect ); destination_rect.y += 25;
-
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -385,20 +255,6 @@ int main(int argc, char* argv[])
 
                     switch(event.key.keysym.sym)
                     {
-                        case SDLK_1: case SDLK_KP_1://Paradox example 1
-                        {
-                            RequestMap(1, map_list, previous_map_name, map_data);
-                            map_set = true;
-                            flags.new_map = false;
-                            break;
-                        }
-                        case SDLK_2: case SDLK_KP_2://Paradox example 2
-                        {
-                            RequestMap(2, map_list, previous_map_name, map_data);
-                            map_set = true;
-                            flags.new_map = false;
-                            break;
-                        }
                         case SDLK_KP_0: case SDLK_0://random gibberish map
                         {
                             RequestMap(0, map_list, previous_map_name, map_data);
@@ -416,7 +272,6 @@ int main(int argc, char* argv[])
                             break;
                         }
                         break;
-
 
                     }//switch
 
@@ -450,7 +305,7 @@ int main(int argc, char* argv[])
                         {
                             // HighLevelSearch( map_data, grid_ui, flags, menu_text_objects, 64, 8);
                             //start search thread and sends it all needed data
-                            pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 64, 8 };
+                            pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 64, 8, std::ref(text_mutex) };
 
                             //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
                             //also we need the flag as we cannot join the thread after we detach it
@@ -460,12 +315,21 @@ int main(int argc, char* argv[])
                         {
                             // HighLevelSearch(map_data, grid_ui, flags, menu_text_objects, 8, 64);
                             //start search thread and sends it all needed data
-                            pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 8, 64 };
+                            pathfind_thread = std::thread{ HighLevelSearch, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), 8, 64, std::ref(text_mutex) };
 
                             //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
                             //also we need the flag as we cannot join the thread after we detach it
                             pathfind_thread.detach();
                         }
+                        // else if(map_data.search_type == SEARCH_TYPE::MAZE)
+                        // {
+                        //     //start search thread and sends it all needed data
+                        //     pathfind_thread = std::thread{ FindLabyrinthPath, std::ref(map_data), std::ref(grid_ui), std::ref(flags), std::ref(menu_text_objects), std::ref(text_mutex) };
+                        //
+                        //     //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
+                        //     //also we need the flag as we cannot join the thread after we detach it
+                        //     pathfind_thread.detach();
+                        // }
                         else
                         {
                             // FindPath(map_data, grid_ui, flags, menu_text_objects);

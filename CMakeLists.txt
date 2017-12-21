@@ -54,7 +54,7 @@ include_directories(${SDL2_TTF_INCLUDE_DIR})
 #include_directories(${GLM_INCLUDE_DIR})
 
 add_executable(${app_name} ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${app_name} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY} ${SDL2_MIXER_LIBRARY} ${LUA_LIBRARY} ${Vulkan_LIBRARY} ${GLM_LIBRARY})
+target_link_libraries(${app_name} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY})
 
 #copy contents of root folder "data" to folder "data" next to executable, if build is succeeds(POST_BUILD)
 add_custom_command(TARGET ${app_name} POST_BUILD

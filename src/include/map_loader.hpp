@@ -86,6 +86,11 @@ bool LoadMap(std::string map_name, MapData& data)
                 data.search_type = SEARCH_TYPE::OCTILE_HIGH_64;
                 data.heuristic_type = HEURISTIC_TYPE::OCTILE;
             }
+            else if(line == "maze")
+            {
+                data.search_type = SEARCH_TYPE::MAZE;
+                data.heuristic_type = HEURISTIC_TYPE::MANHATTAN;
+            }
 
             //read height
             map_file_stream >> line >> line;
