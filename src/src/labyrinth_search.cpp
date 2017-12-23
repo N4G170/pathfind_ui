@@ -42,7 +42,7 @@ std::map<int, LabyrinthNode> FindNodes(MapData& map_data)
         if((n > 0 || s > 0) && (w > 0 || e > 0))
         {
             //we store the node XY to avoid recalculating the in the future
-            nodes[i] = {i, node_x, node_y, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+            //nodes[i] = {i, node_x, node_y, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
         }
     }
     //</f> /Find Nodes
@@ -141,7 +141,7 @@ void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid,
         }
     }
     std::cout<<"END"<<std::endl;
-    
+
     // auto start_closest{FindClosestNode(search_data.start_index, nodes, map_data.map_width, map_data.map_height)};
     // auto target_closest{FindClosestNode(search_data.target_index, nodes, map_data.map_width, map_data.map_height)};
 
