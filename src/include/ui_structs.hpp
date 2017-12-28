@@ -3,8 +3,7 @@
 
 #include <memory>
 #include "SDL.h"
-
-struct Deleters;
+#include "structs.hpp"
 
 /**
 * \brief Struct storing the rendering status for a node

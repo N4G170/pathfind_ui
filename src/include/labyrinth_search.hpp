@@ -3,7 +3,6 @@
 
 #include "structs.hpp"
 #include "ui_structs.hpp"
-#include "text.hpp"
 #include <mutex>
 #include <vector>
 

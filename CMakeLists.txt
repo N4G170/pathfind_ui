@@ -39,8 +39,14 @@ include_directories(${SDL2_IMAGE_INCLUDE_DIR})
 find_package(SDL2_ttf REQUIRED)
 include_directories(${SDL2_TTF_INCLUDE_DIR})
 
+set(sdl_gui_include_dir ${CMAKE_SOURCE_DIR}/sdl_gui/include)
+include_directories(${sdl_gui_include_dir})
+set(sdl_gui_lib ${CMAKE_SOURCE_DIR}/sdl_gui/lib/libsdl_gui.so)
+
 add_executable(${app_name} ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${app_name} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY})
+
+set_target_properties(${app_name} PROPERTIES LINK_FLAGS "-Wl,-rpath,./data/lib")#add local folder as relative path
+target_link_libraries(${app_name} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY}  ${sdl_gui_lib})
 
 #copy contents of root folder "data" to folder "data" next to executable, if build is succeeds(POST_BUILD)
 add_custom_command(TARGET ${app_name} POST_BUILD

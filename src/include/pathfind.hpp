@@ -14,7 +14,9 @@
 #include "clock.hpp"
 #include "heuristics.hpp"
 #include "finder.hpp"
-#include "text.hpp"
+#include "sdl_gui_label.hpp"
+#include "map_renderer.hpp"
+#include "utils.hpp"
 
 
 using namespace std::chrono_literals;
@@ -25,7 +27,7 @@ std::function<float(const int&, const int&, const float&, const float&, const in
 /**
 * \brief Searches for the shortest path on a map for a given benchmark
 */
-void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex)
+std::string FindPath(MapData& map_data, MapRenderer* map_renderer, ControlFlags* flags, sdl_gui::Label* result_label, std::mutex* text_mutex)
 {
     //number of cells analyzed
     unsigned int operations = 0;
@@ -45,15 +47,13 @@ void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainCont
 
 
 // <f> Prepare Map Render Vector (tag from editor custom fold)
-    draw_data_grid.resize(map_data.map_height * map_data.map_width);
-
-    for(int i = 0; i < map_data.map_height * map_data.map_width; i++)
-        draw_data_grid[i] = DrawData{false, false, 0};
+    //resize and reset vector
+    map_renderer->ResizeVector(map_data.map_height * map_data.map_width);
 
     if(search_data.start_index < map_data.map_height * map_data.map_width)
-        draw_data_grid[search_data.start_index].start_or_target = 1;
+        map_renderer->SetStartNode(search_data.start_index);
     if(search_data.target_index < map_data.map_height * map_data.map_width)
-        draw_data_grid[search_data.target_index].start_or_target = 2;
+        map_renderer->SetTargetNode(search_data.target_index);
 // </f> (tag from editor custom fold)
 
     //Start path find
@@ -68,17 +68,17 @@ void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainCont
     map_data.min_path_cost = -1;
     map_data.path_buffer.clear();
 
-    while(search_data.to_visit.size() > 0 && !flags.quit && !flags.stop)//we have elements to check and we are not closing
+    while(search_data.to_visit.size() > 0 && !flags->quit && !flags->stop)//we have elements to check and we are not closing
     {
-        while(flags.pause)
+        while(flags->pause_resume)
             std::this_thread::sleep_for(5ms);
 
         //In each step we analyze each cell as store its valid neighbors
-        if(FinderStep(search_data, map_data, draw_data_grid, benchmark))
+        if(FinderStep(search_data, map_data, map_renderer, benchmark))
             break;//found path
         operations++;
 
-        if(!flags.fast)
+        if(!flags->search_speed_is_fast)
         {
             thread_sleeps++;
             std::this_thread::sleep_for(0.2ms);
@@ -86,16 +86,18 @@ void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainCont
     }
 
     //based on the exit mode we use different debug outputs
-    if(!flags.quit)
+    if(!flags->quit)
     {
         MessageWriter::Instance()->WriteLineToConsole("Path took "+Clock::Instance()->StopAndReturnClock(clock_id)+
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
 
-        std::lock_guard<std::mutex> lock(text_mutex);
-        menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
+        // std::lock_guard<std::mutex> lock(*text_mutex);
+        // result_label->Text("<b>Result length: </b>"+std::to_string(map_data.min_path_cost), {255,255,255,255});
+        flags->running = false;
+        return "<b>Result length: </b>"+std::to_string(map_data.min_path_cost);
     }
-    else if(flags.stop)
+    else if(flags->stop)
     {
         MessageWriter::Instance()->WriteLineToConsole("Search stopped by user.");
     }
@@ -105,7 +107,8 @@ void FindPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainCont
         std::cout << "Search stopped because program terminated." << "\n";
     }
 
-    flags.new_map = true;
+    flags->running = false;
+    return "";
 }
 
 /**

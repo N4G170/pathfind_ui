@@ -5,7 +5,7 @@ using namespace std::chrono_literals;
 /**
 * \brief Process a node and checks its neighbors storing them if valid
 */
-bool FinderStep(SearchData& search_data, MapData& map_data, std::vector<DrawData>& draw_data_grid, MapBenchmark& benchmark)
+bool FinderStep(SearchData& search_data, MapData& map_data, MapRenderer* map_renderer, MapBenchmark& benchmark)
 {
     //get a copy of the node with lowest cost
     Node current_node = *search_data.to_visit.begin();
@@ -15,7 +15,7 @@ bool FinderStep(SearchData& search_data, MapData& map_data, std::vector<DrawData
     search_data.node_status[current_node.index] = CLOSED_NODE;
 
     //update ui
-    draw_data_grid[current_node.index].visited = true;
+    map_renderer->SetVisited(current_node.index);
 
     //we found the destination
     if(current_node.index == search_data.target_index)
@@ -65,7 +65,7 @@ bool FinderStep(SearchData& search_data, MapData& map_data, std::vector<DrawData
                 search_data.to_visit.insert(new_node);
                 search_data.node_status[neighbor_index] = OPEN_NODE;
                 //UI update
-                draw_data_grid[neighbor_index].to_check = true;
+                map_renderer->SetToCheck(neighbor_index);
             }
             else//update node in the set
             {

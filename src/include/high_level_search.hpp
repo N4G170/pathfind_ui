@@ -13,9 +13,9 @@
 #include "clock.hpp"
 #include "heuristics.hpp"
 #include "finder.hpp"
-#include "text.hpp"
 #include "utils.hpp"
 #include <mutex>
+#include "sdl_gui_label.hpp"
 
 struct HighLevelNode
 {
@@ -65,15 +65,13 @@ std::map<int, std::vector< int > > FindHighLevelPath(const int& start_index, con
 /**
 * \brief Searches for the shortest path on a map using an high level abstraction
 */
-void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, int grid_width, int node_size, std::mutex& text_mutex)
+std::string HighLevelSearch( MapData& map_data, MapRenderer* map_renderer, ControlFlags* flags, int grid_width, int node_size, sdl_gui::Label* result_label, std::mutex* text_mutex)
 {
     if(high_level_grid.size() == 0 || g_previous_map_name.compare(map_data.name) != 0)//high level grid was not created
     {
         g_previous_map_name = map_data.name;
         CreateHighLevelGraph(map_data, grid_width, node_size);
     }
-
-    draw_data_grid.clear();
 
     MapBenchmark benchmark = map_data.benchmarks[map_data.selected_bechmark_index];
     int start_index = GetIndexFromCoordinate (benchmark.start_x, benchmark.start_y, map_data.map_width);
@@ -86,10 +84,10 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
     {
         MessageWriter::Instance()->WriteLineToConsole("No High Level path found.");
 
-        menu_texts["result"].SetString("Result length: -1");
+        // menu_texts["result"].SetString("Result length: -1");
 
-        flags.new_map = true;
-        return;
+        flags->running = false;
+        return "Result length: -1";
     }
 
     //for clarity
@@ -108,17 +106,15 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
     //the clock will not count the time processing in high level
     unsigned long clock_id = Clock::Instance()->StartClock();
 
-// <f> Prepare Map Render Vector (tag from editor custom fold)
-    draw_data_grid.resize(map_data.map_height * map_data.map_width);
-
-    for(int i = 0; i < map_data.map_height * map_data.map_width; i++)
-        draw_data_grid[i] = DrawData{false, false, 0};
+    // <f> Prepare Map Render Vector (tag from editor custom fold)
+    //resize and reset vector
+    map_renderer->ResizeVector(map_data.map_height * map_data.map_width);
 
     if(start_index < map_data.map_height * map_data.map_width)
-        draw_data_grid[start_index].start_or_target = 1;
+        map_renderer->SetStartNode(start_index);
     if(target_index < map_data.map_height * map_data.map_width)
-        draw_data_grid[target_index].start_or_target = 2;
-// </f> (tag from editor custom fold)
+        map_renderer->SetTargetNode(target_index);
+    // </f> (tag from editor custom fold)
 
     //start searching for final path
     //prepare algorithm helper struct
@@ -152,48 +148,51 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
         search_data.to_visit.insert(current_cell);//inserts the first cell in the set so we can start searching
         search_data.parents[search_data.start_index] = -1;//the start cell has no parent
 
-        while(flags.pause)
+        while(flags->pause_resume)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        if(!flags.fast)
+        if(!flags->search_speed_is_fast)
         {
             thread_sleeps++;
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
 
-        if(flags.quit || flags.stop)
+        if(flags->quit || flags->stop)
             break;
 
         //In each step we analyze each cell as store its valid neighbors
-        while(!FinderStep(search_data, map_data, draw_data_grid, local_benchmark))
+        while(!FinderStep(search_data, map_data, map_renderer, local_benchmark))
         {
             operations++;
 
-            while(flags.pause)
+            while(flags->pause_resume)
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-            if(!flags.fast)
+            if(!flags->search_speed_is_fast)
             {
                 thread_sleeps++;
                 std::this_thread::sleep_for(std::chrono::microseconds(200));
             }
 
-            if(flags.quit || flags.stop)
+            if(flags->quit || flags->stop)
                 break;
         }
     }
 
     //based on the exit mode we use different debug outputs
-    if(!flags.quit)
+    if(!flags->quit)
     {
         MessageWriter::Instance()->WriteLineToConsole("Path took "+Clock::Instance()->StopAndReturnClock(clock_id)+
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
 
-        std::lock_guard<std::mutex> lock(text_mutex);
-        menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
+        // std::lock_guard<std::mutex> lock(*text_mutex);
+        // result_label->Text("Result length: "+std::to_string(map_data.min_path_cost), {255,255,255,255});
+        // menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
+        flags->running = false;
+        return "Result length: "+std::to_string(map_data.min_path_cost);
     }
-    else if(flags.stop)
+    else if(flags->stop)
     {
         MessageWriter::Instance()->WriteLineToConsole("Search stopped by user.");
     }
@@ -203,7 +202,8 @@ void HighLevelSearch( MapData& map_data, std::vector<DrawData>& draw_data_grid, 
         std::cout << "Search stopped because program terminated." << "\n";
     }
 
-    flags.new_map = true;
+    flags->running = false;
+    return "";
 }
 
 /**

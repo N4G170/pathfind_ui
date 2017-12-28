@@ -16,6 +16,7 @@
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "config.hpp"
+#include <mutex>
 
 enum ERROR_CODE
 {
@@ -174,23 +175,21 @@ struct MainPointers
     //The window we'll be rendering to
     std::unique_ptr<SDL_Window, Deleters> window;
 
-    std::unique_ptr<TTF_Font, Deleters> main_font;
+    // std::unique_ptr<TTF_Font, Deleters> main_font;
 
     std::unique_ptr<SDL_Renderer, Deleters> screen_renderer;
 };
 
-struct MainControlFlags
+struct ControlFlags
 {
-    // bool new_map;
-    // bool quit;
-    // bool pause;
-    // bool stop;
-    // bool fast;
-    std::atomic<bool> new_map;
-    std::atomic<bool> quit;
-    std::atomic<bool> pause;
-    std::atomic<bool> stop;
-    std::atomic<bool> fast;
+    std::atomic<bool> show_grid{false};
+    std::atomic<bool> show_map{true};
+    std::atomic<bool> show_path{true};
+    std::atomic<bool> search_speed_is_fast{false};
+    std::atomic<bool> pause_resume{false};
+    std::atomic<bool> stop{false};
+    std::atomic<bool> quit{false};
+    std::atomic<bool> running{false};
 };
 
 #endif //STRUCTS_H

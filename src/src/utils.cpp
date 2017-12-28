@@ -60,5 +60,5 @@ std::queue< std::pair<int,DIRECTION> > GetNeighbors(const int& current_index, Ma
     if(has_sw && IsPassable(current_node_x - 1, current_node_y + 1, map_data))
         neighbors.push( std::make_pair(GetIndexFromCoordinate(current_node_x - 1, current_node_y + 1, map_data.map_width), DIRECTION::DIAGONAL) );
 
-    return std::move(neighbors);
+    return neighbors;
 }
