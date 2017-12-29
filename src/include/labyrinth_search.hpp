@@ -40,7 +40,7 @@ std::map<int, LabyrinthNode> FindNodes(MapData& map_data);
 /**
  * \brief find the shortest path in th labyrinth
  */
-void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex);
+// void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex);
 
 /**
  * \brief Find the node closest to the given labyrinth position

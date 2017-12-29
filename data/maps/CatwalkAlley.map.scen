@@ -1,4 +1,13 @@
 version 1
+15	maps/sc1/CatwalkAlley.map	512	512	186	264	233	304	63.5685
+15	maps/sc1/CatwalkAlley.map	512	512	93	134	37	116	63.4558
+26	maps/sc1/CatwalkAlley.map	512	512	302	90	382	149	104.439
+26	maps/sc1/CatwalkAlley.map	512	512	138	445	51	489	105.225
+28	maps/sc1/CatwalkAlley.map	512	512	329	399	434	383	115.77
+28	maps/sc1/CatwalkAlley.map	512	512	303	385	384	435	112.196
+70	maps/sc1/CatwalkAlley.map	512	512	304	346	266	168	283.848
+70	maps/sc1/CatwalkAlley.map	512	512	383	331	310	219	280.948
+71	maps/sc1/CatwalkAlley.map	512	512	2	339	118	326	287.492
 263	maps/sc1/CatwalkAlley.map	512	512	468	506	25	185	1052.84
 1	maps/sc1/CatwalkAlley.map	512	512	80	402	75	397	7.07107
 1	maps/sc1/CatwalkAlley.map	512	512	323	235	327	229	7.65685

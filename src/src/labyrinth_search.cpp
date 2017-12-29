@@ -104,7 +104,7 @@ std::map<int, LabyrinthNode> FindNodes(MapData& map_data)
     return nodes;
 }
 
-void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex)
+/*void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid, MainControlFlags& flags, std::map<std::string, Text>& menu_texts, std::mutex& text_mutex)
 {
     //get selected benchmark
     MapBenchmark benchmark = map_data.benchmarks[map_data.selected_bechmark_index];
@@ -149,7 +149,7 @@ void FindLabyrinthPath(MapData& map_data, std::vector<DrawData>& draw_data_grid,
     // draw_data_grid[nodes[target_closest].index].visited = true;
     //
     // std::cout<<start_closest<<std::endl;
-}
+}*/
 
 int FindClosestNode(int position_index, std::vector<LabyrinthNode>& nodes, const int map_width, const int map_height)
 {

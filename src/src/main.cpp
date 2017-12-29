@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
         float frame_cap {1.f / 60 * 1000};
         float last_frame_time {0};
 
-        float fixed_frame_time {0.03};
+        float fixed_frame_time {0.03f};
         float accumulated_time {0};
 
         while(!control_flags.quit)
