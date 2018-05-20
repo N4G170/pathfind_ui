@@ -83,15 +83,24 @@ struct MapData
 struct Node
 {
     int index = 0;
+    /**
+     * Real cost to reach this node from the start
+     */
     float g_cost;
+    /**
+     * Total expected cost from start to target going through this node (cost to node + heuristic to target)
+     */
     float f_cost;
+    /**
+     * Heuristic tost to reach the target, from this node
+     */
     float h_cost;
 
     Node(){}
 
     Node(int new_index, float new_g_cost, float new_h_cost):index{new_index}, g_cost{new_g_cost}, h_cost{new_h_cost}
     {
-        f_cost = g_cost + new_h_cost;
+        f_cost = g_cost + h_cost;
     }
 
     bool operator() (const Node& left_node, const Node& right_node) const//used by multiset
@@ -105,7 +114,7 @@ struct Node
 */
 struct SearchData
 {
-    std::multiset<Node, Node> to_visit;//cost is the key amd the value is the index
+    std::multiset<Node, Node> to_visit;//cost is the key and the value is the index
     std::map<int, bit2> node_status;//keep record of the status of each node we touch (open, closed, new)
     std::map<int, int> parents;//parent cells for each cell
     std::map<int, float> g_costs;//cost of moving to a cell

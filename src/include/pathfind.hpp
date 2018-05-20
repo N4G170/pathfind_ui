@@ -18,7 +18,6 @@
 #include "map_renderer.hpp"
 #include "utils.hpp"
 
-
 using namespace std::chrono_literals;
 
 //forward declaration (implemented in the end of this file)
@@ -88,14 +87,15 @@ std::string FindPath(MapData& map_data, MapRenderer* map_renderer, ControlFlags*
     //based on the exit mode we use different debug outputs
     if(!flags->quit)
     {
-        MessageWriter::Instance()->WriteLineToConsole("Path took "+Clock::Instance()->StopAndReturnClock(clock_id)+
+        std::string time_str{Clock::Instance()->StopAndReturnClock(clock_id)};
+        MessageWriter::Instance()->WriteLineToConsole("Path took "+ time_str +
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
 
         // std::lock_guard<std::mutex> lock(*text_mutex);
         // result_label->Text("<b>Result length: </b>"+std::to_string(map_data.min_path_cost), {255,255,255,255});
         flags->running = false;
-        return "<b>Result length: </b>"+std::to_string(map_data.min_path_cost);
+        return std::to_string(map_data.min_path_cost)+"|"+time_str;
     }
     else if(flags->stop)
     {

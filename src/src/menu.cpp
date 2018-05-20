@@ -5,7 +5,7 @@
 #include "sdl_gui_constants.hpp"
 #include "pathfind.hpp"
 #include "high_level_search.hpp"
-// #include "labyrinth_search.hpp"
+#include "labyrinth_search.hpp"
 
 //<f> Constructors & operator=
 Menu::Menu(sdl_gui::GuiManager* gui_manager, ControlFlags* control_flags, std::mutex* text_mutex, MapRenderer* map_renderer):m_gui_manager{gui_manager},
@@ -58,6 +58,29 @@ Menu& Menu::operator=(Menu&& other) noexcept
 //</f> /Constructors & operator=
 
 //<f> Methods
+void Menu::Input(SDL_Event& event)
+{
+    if( event.type == SDL_KEYDOWN)
+    {
+        switch (event.key.keysym.sym)
+        {
+            case SDLK_r: RunSearch(); break;
+
+            case SDLK_DOWN: ChangeBenchmark(-1); break;
+            case SDLK_UP: ChangeBenchmark(1); break;
+
+            case SDLK_RIGHT: ChangeMap(1); break;
+            case SDLK_LEFT: ChangeMap(-1); break;
+
+            case SDLK_f: SearchSpeed(m_speed_label); break;
+
+            default:
+            /* code */
+            break;
+        }
+    }
+}
+
 void Menu::Logic(float delta_time)
 {
     if(m_future_result.valid() && m_future_result.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
@@ -66,7 +89,12 @@ void Menu::Logic(float delta_time)
         if(result != m_result_string)
         {
             m_result_string = result;
-            m_result_label->Text(m_result_string, sdl_gui::Colour::White);
+
+            auto result_str = m_result_string.substr(0, m_result_string.find("|"));
+            auto result_time = m_result_string.substr(m_result_string.find("|") + 1);
+
+            m_result_label->Text("<b>Result length: </b>"+result_str, sdl_gui::Colour::White);
+            m_result_time_label->Text("<b>Search time: </b>"+result_time+" ms", sdl_gui::Colour::White);
         }
     }
 }
@@ -163,7 +191,7 @@ void Menu::InitMenu()
     m_warning_label = m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0});
     m_warning_label->Parent(menu_container);
     m_warning_label->FontSize(13);
-    m_warning_label->Text("WARNING-EXPERIMENTAL HIERARCHICAL MAP", sdl_gui::Colour::Red);
+    m_warning_label->Text("Hierarchical room search", sdl_gui::Colour::Red);
     m_warning_label->Anchor(sdl_gui::AnchorType::TOP_CENTRE);
     m_warning_label->LocalPosition({container_size.w / 2, y});
     m_warning_label->Enabled( m_map_list[0].rfind("_high") != std::string::npos );
@@ -235,7 +263,7 @@ void Menu::InitMenu()
     m_expected_label = m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0});
     m_expected_label->Parent(menu_container);
     m_expected_label->FontSize(14);
-    m_expected_label->Text("<b>Expected lenght:</b> "+ std::to_string(m_map_data.benchmarks[0].expected_min_path_cost), sdl_gui::Colour::White);
+    m_expected_label->Text("<b>Expected length:</b> "+ std::to_string(m_map_data.benchmarks[0].expected_min_path_cost), sdl_gui::Colour::White);
     m_expected_label->LocalPosition({x, y});
 
     y += m_expected_label->Size().h + y_spacing;
@@ -243,15 +271,23 @@ void Menu::InitMenu()
     m_result_label = m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0});
     m_result_label->Parent(menu_container);
     m_result_label->FontSize(14);
-    m_result_label->Text("<b>Result lenght:</b> ", sdl_gui::Colour::White);
+    m_result_label->Text("<b>Result length:</b> ", sdl_gui::Colour::White);
     m_result_label->LocalPosition({x, y});
 
     y += m_result_label->Size().h + y_spacing;
 
+    m_result_time_label = m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0});
+    m_result_time_label->Parent(menu_container);
+    m_result_time_label->FontSize(14);
+    m_result_time_label->Text("<b>Search time:</b> ", sdl_gui::Colour::White);
+    m_result_time_label->LocalPosition({x, y});
+
+    y += m_result_time_label->Size().h + y_spacing;
+
     auto run_btn{m_gui_manager->CreateElement<sdl_gui::Button>({0,0}, {container_size.w - x_spacing * 2, 30})};
     run_btn->Parent(menu_container);
     run_btn->LocalPosition({x, y});
-    run_btn->CreateLabel("Find Path", sdl_gui::c_default_font_path, 16, sdl_gui::Colour::Black, {0,0});
+    run_btn->CreateLabel("Find Path (R)", sdl_gui::c_default_font_path, 16, sdl_gui::Colour::Black, {0,0});
     run_btn->CentreLabel();
     run_btn->MouseInteractionPtr()->MouseButtonCallback(SDL_BUTTON_LEFT, sdl_gui::InputKeyCallbackType::CLICK,
         std::bind(&Menu::RunSearch, this ));
@@ -274,19 +310,19 @@ void Menu::InitMenu()
     auto speed_btn{m_gui_manager->CreateElement<sdl_gui::Button>({0,0}, {btn_w, btn_h})};
     speed_btn->Parent(menu_container);
 
-    auto speed_label{m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0})};
-    speed_label->Parent(menu_container);
-    speed_label->FontSize(16);
-    speed_label->Text("Search speed - Normal", sdl_gui::Colour::White);
+    m_speed_label = m_gui_manager->CreateElement<sdl_gui::Label>({0,0}, {0,0});
+    m_speed_label->Parent(menu_container);
+    m_speed_label->FontSize(16);
+    m_speed_label->Text("Search speed - Normal", sdl_gui::Colour::White);
 
     speed_btn->MouseInteractionPtr()->MouseButtonCallback(SDL_BUTTON_LEFT, sdl_gui::InputKeyCallbackType::CLICK,
-    std::bind( &Menu::SearchSpeed, this, speed_label ) );
+    std::bind( &Menu::SearchSpeed, this, m_speed_label ) );
 
     //position
     x = x_spacing;
     speed_btn->LocalPosition({x,y});
 
-    speed_label->LocalPosition( {x + btn_w + x_spacing, y + btn_h / 2 - speed_label->Size().h/2} );
+    m_speed_label->LocalPosition( {x + btn_w + x_spacing, y + btn_h / 2 - m_speed_label->Size().h/2} );
     //</f> /Speed
 
     y += btn_h + y_spacing;
@@ -416,7 +452,7 @@ void Menu::InitMenu()
 
     //<f> squares
     x = x_spacing;
-    y += y_spacing;
+    // y += y_spacing;
 
     std::vector<std::string> captions{"Start node", "End node", "Passable node", "Impassable node", "Node to check", "Checked node", "Shortest path node"};
 
@@ -440,6 +476,8 @@ void Menu::InitMenu()
     }
     //</f> /squares
     //</f> /Caption
+
+    ChangeMap(0);//show first map
 }
 
 //<f> Navigation functions
@@ -458,15 +496,30 @@ void Menu::ChangeMap(int index_change)
     m_map_name_label->Text(m_map_list[m_map_index], sdl_gui::Colour::White);
     m_map_number_label->Text(std::to_string(m_map_index + 1)+" / "+std::to_string(m_map_list.size()), sdl_gui::Colour::White);
 
-    //if map has _high in name, show warning
-    m_warning_label->Enabled( m_map_list[m_map_index].rfind("_high") != std::string::npos );
+    //if map has _high of fast in name, show warning
+    if(m_map_list[m_map_index].rfind("_fast") != std::string::npos)
+    {
+        m_warning_label->Text("MAZE NODE SEARCH", sdl_gui::Colour::Red);
+        m_warning_label->Enabled( true );
+    }
+    else if(m_map_list[m_map_index].rfind("_high") != std::string::npos)
+    {
+        m_warning_label->Text("HIERARCHICAL ROOM SEARCH", sdl_gui::Colour::Red);
+        m_warning_label->Enabled( true );
+    }
+    else
+    {
+        m_warning_label->Enabled( false );
+    }
 
     GetCurrentMapData();
 
     m_benchmark_index = 0;
     m_benchmark_number_label->Text(std::to_string(m_benchmark_index + 1)+" / "+std::to_string(m_map_data.benchmarks.size()), sdl_gui::Colour::White);
-    m_expected_label->Text("<b>Expected lenght:</b> "+ std::to_string(m_map_data.benchmarks[m_benchmark_index].expected_min_path_cost), sdl_gui::Colour::White);
+    m_expected_label->Text("<b>Expected length:</b> "+ std::to_string(m_map_data.benchmarks[m_benchmark_index].expected_min_path_cost), sdl_gui::Colour::White);
     m_map_data.selected_bechmark_index = m_benchmark_index;
+    m_result_label->Text("<b>Result length:</b> ", sdl_gui::Colour::White);
+    m_result_time_label->Text("<b>Search time:</b> ", sdl_gui::Colour::White);
 
     m_map_renderer->SetMapData(&m_map_data);
     m_map_renderer->CreateMap();
@@ -488,6 +541,7 @@ void Menu::ChangeBenchmark(int index_change)
     m_benchmark_number_label->Text(std::to_string(m_benchmark_index + 1)+" / "+std::to_string(m_map_data.benchmarks.size()), sdl_gui::Colour::White);
     m_expected_label->Text("<b>Expected length:</b> "+ std::to_string(m_map_data.benchmarks[m_benchmark_index].expected_min_path_cost), sdl_gui::Colour::White);
     m_result_label->Text("<b>Result length:</b> ", sdl_gui::Colour::White);
+    m_result_time_label->Text("<b>Search time:</b> ", sdl_gui::Colour::White);
     m_map_data.selected_bechmark_index = m_benchmark_index;
 }
 
@@ -502,6 +556,9 @@ void Menu::RunSearch()
     m_control_flags->pause_resume = false;
     //set movement costs (should be moved to map data load as weach map could have different costs)
     m_map_data.line_cost = 1;
+    // m_map_data.diagonal_cost = 1.4142135623730950488f;
+    // m_map_data.diagonal_cost = 1.414213562373095048801688724209698078569671875376948073176;
+    // m_map_data.diagonal_cost = 1.4142135623730950488016;
     m_map_data.diagonal_cost = std::sqrt(2);
     m_map_data.selected_bechmark_index = m_benchmark_index;
 
@@ -527,6 +584,17 @@ void Menu::RunSearch()
         // pathfind_thread = std::thread{ HighLevelSearch, std::ref(m_map_data), m_map_renderer, m_control_flags, 8, 64, m_result_label, m_text_mutex };
 
         m_future_result = std::async( std::launch::async, HighLevelSearch, std::ref(m_map_data), m_map_renderer, m_control_flags, 8, 64, m_result_label, m_text_mutex );
+        //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
+        //also we need the flag as we cannot join the thread after we detach it
+        // pathfind_thread.detach();
+    }
+    else if(m_map_data.search_type == SEARCH_TYPE::MAZE)
+    {
+        // HighLevelSearch(map_data, grid_ui, flags, menu_text_objects, 8, 64);
+        //start search thread and sends it all needed data
+        // pathfind_thread = std::thread{ HighLevelSearch, std::ref(m_map_data), m_map_renderer, m_control_flags, 8, 64, m_result_label, m_text_mutex };
+
+        m_future_result = std::async( std::launch::async, FindLabyrinthPath, std::ref(m_map_data), m_map_renderer, m_control_flags, m_result_label, m_text_mutex );
         //there is a shared flag that will stop the thread so it will not keep running after we terminate the program
         //also we need the flag as we cannot join the thread after we detach it
         // pathfind_thread.detach();

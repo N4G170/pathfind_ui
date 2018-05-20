@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
             while( SDL_PollEvent( &event ) != 0 )
             {
                 gui_manager.Input(event);
+                menu.Input(event);
                 //User requests quit
                 if( event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
                     control_flags.quit = true;

@@ -35,6 +35,7 @@ class Menu
         //</f> /Virtual Methods
 
         //<f> Methods
+        void Input(SDL_Event& event);
         void Logic(float delta_time);
         //</f> /Methods
 
@@ -76,7 +77,9 @@ class Menu
         sdl_gui::Label* m_benchmark_number_label;
         sdl_gui::Label* m_expected_label;
         sdl_gui::Label* m_result_label;
+        sdl_gui::Label* m_result_time_label;
         sdl_gui::Label* m_warning_label;
+        sdl_gui::Label* m_speed_label;
         //</f> /gui vars
 
         //<f> Control Variables

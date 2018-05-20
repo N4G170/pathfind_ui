@@ -241,7 +241,7 @@ void MapRenderer::DrawPath()
     SDL_Surface* path_surface = SDL_CreateRGBSurface(0, map_width * m_cell_size, map_height * m_cell_size,32,0,0,0,0);//create empty surface
 
     SDL_Rect destination_rect;
-    for(int i = 1; i < node_count; i++)//we jump the first node as it is the target, so we do not render over it
+    for(int i = 1; i < node_count; i++)
     {
         destination_rect.x = m_cell_size * GetCoordinateX(path[i], map_width);
         destination_rect.y = m_cell_size * GetCoordinateY(path[i], map_width);

@@ -87,7 +87,7 @@ std::string HighLevelSearch( MapData& map_data, MapRenderer* map_renderer, Contr
         // menu_texts["result"].SetString("Result length: -1");
 
         flags->running = false;
-        return "Result length: -1";
+        return "-1";
     }
 
     //for clarity
@@ -182,7 +182,8 @@ std::string HighLevelSearch( MapData& map_data, MapRenderer* map_renderer, Contr
     //based on the exit mode we use different debug outputs
     if(!flags->quit)
     {
-        MessageWriter::Instance()->WriteLineToConsole("Path took "+Clock::Instance()->StopAndReturnClock(clock_id)+
+        std::string time_str{Clock::Instance()->StopAndReturnClock(clock_id)};
+        MessageWriter::Instance()->WriteLineToConsole("Path took "+time_str+
         " ms to process(with 0.2ms * "+std::to_string(thread_sleeps)+" of thread sleep), "+std::to_string(operations)+
         " steps with result lenght of "+std::to_string(map_data.min_path_cost)+" units ("+ std::to_string(map_data.path_buffer.size()) +" total cells)");
 
@@ -190,7 +191,7 @@ std::string HighLevelSearch( MapData& map_data, MapRenderer* map_renderer, Contr
         // result_label->Text("Result length: "+std::to_string(map_data.min_path_cost), {255,255,255,255});
         // menu_texts["result"].SetString("Result length: "+std::to_string(map_data.min_path_cost));
         flags->running = false;
-        return "Result length: "+std::to_string(map_data.min_path_cost);
+        return std::to_string(map_data.min_path_cost)+"|"+time_str;
     }
     else if(flags->stop)
     {
