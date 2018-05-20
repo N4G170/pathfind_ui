@@ -84,7 +84,8 @@ Open the solution, set it to release (64bit) and build it. The final build and a
 
 ## TODO
 
-Cleanup the code and reqork the UI.
+Cleanup the code and rework the UI.
+
 Expand the fast maze algorithm to work on wider maps.
 
 If you find any bug of error, let me know.
